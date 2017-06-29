@@ -582,7 +582,7 @@ __argsparse_usage_short_line_management() {
 ## usage.
 ## @ingroup ArgsparseUsage
 argsparse_usage_short() {
-	local option values current_line current_option param
+	local option values current_line current_option param format
 	local max_length=78
 	current_line=$argsparse_pgm
 	for option in "${!__argsparse_options_descriptions[@]}"
@@ -599,7 +599,17 @@ argsparse_usage_short() {
 				current_option="$current_option <$(
 					__argsparse_join_array '|' "${!values}")>"
 			else
-				current_option="$current_option ${option^^}"
+
+			    if format=$(argsparse_has_option_property "$option" format)
+			    then
+				    current_option="$current_option ${format}"
+				else
+				    current_option="$current_option ${option^^}"
+				fi
+
+
+
+
 			fi
 		fi
 		if ! argsparse_has_option_property "$option" mandatory
@@ -629,7 +639,7 @@ declare -a __argsparse_parameters_description
 
 ## @fn argsparse_describe_parameters()
 ## @brief Describe non-option positionnal parameters.
-## @details 
+## @details
 ## This function has currently 2 purposes:
 ## @li enhance the "short" usage program description (see
 ## argsparse_usage_short())
@@ -1319,7 +1329,7 @@ argsparse_set_option_property() {
 			cumulative|cumulativeset)
 				argsparse_set_option_property value "$option"
 				;;&
-			type:*|exclude:*|alias:*|require:*)
+			type:*|exclude:*|alias:*|require:*|format:*)
 				if [[ "$property" =~ ^.*:(.+)$ ]]
 				then
 					# If property has a value, check its format, we
