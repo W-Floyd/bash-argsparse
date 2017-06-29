@@ -564,13 +564,12 @@ argsparse_set_option() {
 __argsparse_usage_short_line_management() {
 	[[ $# -eq 1 ]] || return 1
 	local next_token=$1
-	local max_length=78
 	local bigger_line
 	bigger_line="$current_line $next_token"
 	if [[ "${#bigger_line}" -gt "$max_length" ]]
 	then
 		printf -- '%s \\\n' "$current_line"
-		printf -v current_line "\t%s" "$next_token"
+		printf -v current_line "%s" "$next_token"
 	else
 		current_line=$bigger_line
 	fi
@@ -583,8 +582,10 @@ __argsparse_usage_short_line_management() {
 ## @ingroup ArgsparseUsage
 argsparse_usage_short() {
 	local option values current_line current_option param format
-	local max_length=78
+	local i=0
+	local max_length=80
 	current_line=$argsparse_pgm
+	local leader_length=${#current_line}
 	for option in "${!__argsparse_options_descriptions[@]}"
 	do
 		if argsparse_has_option_property "$option" hidden
@@ -611,7 +612,12 @@ argsparse_usage_short() {
 		then
 			current_option="[ $current_option ]"
 		fi
-		__argsparse_usage_short_line_management "$current_option"
+		if [ "${i}" = 0 ]; then
+		    max_length=$((max_length-leader_length)) __argsparse_usage_short_line_management "$current_option"
+		else
+		    __argsparse_usage_short_line_management "$current_option"
+		    i=$((i+1))
+		fi
 	done
 	if __argsparse_has_array_item __argsparse_parameters_description
 	then
