@@ -688,6 +688,34 @@ argsparse_describe_parameters() {
 	argsparse_maximum_parameters "$max"
 }
 
+#assumes line is not padded, and uses inbuild padding to pretend on first line
+argsparse_fold_line() {
+    local pad='                   '
+	local max_length=80
+	local cur_line=''
+	local i=0
+    while read -d ' ' -r __word; do
+        if [ "${i}" = '0' ]; then
+            if [ -z "${cur_line}" ]; then
+                tmp_cur_line="${pad}${__word}"
+            else
+                tmp_cur_line="${pad}${cur_line} ${__word}"
+            fi
+        else
+            tmp_cur_line="${cur_line} ${__word}"
+        fi
+
+        if ! [ "${#tmp_cur_line}" -gt "${max_length}" ]; then
+            cur_line="${cur_line} ${__word}"
+        else
+            printf "${cur_line}\n"
+            i=$((i+1))
+            cur_line="${pad}${__word}"
+        fi
+    done <<< "${1} "
+    printf "${cur_line}\n"
+}
+
 ## @fn argsparse_usage_long()
 ## @brief Fully describe the program syntax and options to the end-user.
 ## @details This function generates and prints the "long" description
@@ -696,7 +724,7 @@ argsparse_describe_parameters() {
 ## @ingroup ArgsparseUsage
 argsparse_usage_long() {
 	local long short sep format array property propstring
-	local q=\' bol='\t\t  '
+	local q=\' bol='                  '
 	local -A long_to_short=()
 	local -a values
 	# Reverse the __argsparse_short_options array.
@@ -730,11 +758,11 @@ argsparse_usage_long() {
 			format=" %s     %- 11s$sep%s\n"
 		fi
 		printf -- "$format" "$short" "--$long" \
-			"${__argsparse_options_descriptions["$long"]}"
+			"$(argsparse_fold_line "${__argsparse_options_descriptions["$long"]}")"
 		if argsparse_has_option_property "$long" cumulative || \
 			argsparse_has_option_property "$long" cumulativeset
 		then
-			printf "${bol}Can be repeated.\n"
+			printf "${bol} Can be repeated.\n"
 		fi
 		if argsparse_has_option_property "$long" value
 		then
@@ -743,13 +771,13 @@ argsparse_usage_long() {
 				values=( "${!array}" )
 				values=( "${values[@]/%/$q}" )
 				values=( "${values[@]/#/$q}" )
-				printf "${bol}Acceptable values: %s\n" \
+				printf "${bol} Acceptable values: %s\n" \
 					"$(__argsparse_join_array " " "${values[@]}")"
 			fi
 			if __argsparse_index_of "$long" \
 				"${!__argsparse_options_default_values[@]}" >/dev/null
 			then
-				printf "${bol}Default: %s.\n" \
+				printf "${bol} Default: %s.\n" \
 					"${__argsparse_options_default_values[$long]}"
 			fi
 		fi
@@ -760,7 +788,7 @@ argsparse_usage_long() {
 			then
 				read -a values <<<"$propstring"
 				values=( "${values[@]/#/--}" )
-				printf "${bol}%s: %s\n" \
+				printf "${bol} %s: %s\n" \
 					"${properties[$property]}" "${values[*]}"
 			fi
 		done
